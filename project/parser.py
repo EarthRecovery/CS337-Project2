@@ -11,3 +11,5 @@ class Parser:
     def parse(self):
         # Implement parsing logic here
         pass
+
+# TA suggested sentence splitting within steps
