@@ -95,3 +95,5 @@ class Parser:
         self.load_data()
         # Implement parsing logic here
         pass
+
+# TA suggested sentence splitting within steps

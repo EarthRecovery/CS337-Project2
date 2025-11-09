@@ -1,8 +1,28 @@
 
 class QA:
     def __init__(self, model):
-        self.model = model
-        self.history = {}
+        self.model = model # JSON of extracted recipe data
+        """
+        {
+            "step_number": int,
+            "description": str,
+            "ingredients": [list of ingredient names],
+            "tools": [list of tools],
+            "methods": [list of methods],
+            "time": {
+                "duration": str or dict of sub-times,
+            },
+            "temperature": {
+                "oven": str (optional),
+                "<ingredient>": str (optional)
+            },
+            "context": {
+                "references": [related step numbers or preconditions],
+                "warnings": [list of warnings or advice] (optional)
+            }
+        }
+        """
+        self.history = {} # what has been inputted and outputted already
         self.question_types = []
         # Recipe retrieval and display (see example above, including "Show me the ingredients list")
         # Navigation utterances ("Go back one step", "Go to the next step", "Repeat please", "Take me to the 1st step", "Take me to the n-th step")
