@@ -1,3 +1,31 @@
+class QuestionTypes():
+
+    # recipe retrieval and display
+    INGREDIENT_LIST = 1 # ex: "show me the ingredients list"
+    TOOL_LIST       = 2 # ex: "show me what tools i'll need"
+    METHOD_LIST     = 3 # ex: "what cooking techniques will i have to do?"
+
+    # navigation utterances
+    STEP_NEXT       = 4 # ex: "go to the next step"
+    STEP_PREVIOUS   = 5 # ex: "go to the previous step"
+    STEP_REPEAT     = 6 # ex: "repeat please"
+    STEP_GOTO       = 7 # ex: "go to step n"
+
+    # parameters of the current step
+    QUANTITY        = 8 # ex: "how much of <ingredient> do I need?"
+    TEMPERATURE     = 9 # ex: "what temperature?" 
+    TIME            = 10 # ex: "how long do I <specific technique>?"
+    DONENESS        = 11 # ex: "when is it done?"
+    SUBSTITUION     = 12 # ex: "can I use <ingredient or tool> instead of <ingredient or tool>"
+
+    # simple "what is", specific "how to", and vague "how to" questions
+    WHAT_IS         = 13 # ex: "what is a <tool being mentioned>?"
+    HOW_TO_SPECIFIC = 14 # ex: "how do I <specific technique>?"
+    HOW_TO_VAGUE    = 15 # ex: "how do I do that?" – (use conversation history to infer what “that” refers to)
+
+    # none of the above
+    UNKNOWN         = 16 # ex: "how is barack obama feeling this afternoon?"
+
 
 class QA:
     def __init__(self, model):
@@ -22,14 +50,8 @@ class QA:
             }
         }
         """
-        self.history = {} # what has been inputted and outputted already
-        self.question_types = []
-        # Recipe retrieval and display (see example above, including "Show me the ingredients list")
-        # Navigation utterances ("Go back one step", "Go to the next step", "Repeat please", "Take me to the 1st step", "Take me to the n-th step")
-        # Asking about the parameters of the current step ("How much of <ingredient> do I need?", "What temperature?", "How long do I <specific technique>?", "When is it done?", "What can I use instead of <ingredient or tool>")
-        # Simple "what is" questions ("What is a <tool being mentioned>?")
-        # Specific "how to" questions ("How do I <specific technique>?").
-        # Vague "how to" questions ("How do I do that?" – use conversation history to infer what “that” refers to)
+        self.history = {} # what has been inputted (and outputted) already
+        self.question_types = QuestionTypes
 
     def question_parser(self, question):
         # parse the input question, identify its type and relevant context
