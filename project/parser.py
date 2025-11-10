@@ -16,7 +16,16 @@ class Parser:
             "Directions":{},
             "nutrition": {}
         }
+        # example output: 
+        # {'url': 'https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475', 'dish_name': 'Mediterranean Crispy Rice Chicken Bowl', 'dish_intro': "This Mediterranean crispy rice chicken bowl features Greek flavors from seasoned chicken, tomatoes, Kalamata olives, feta cheese, banana peppers, and cucumber. It's dressed with a red wine vinaigrette, then topped with crunchy rice, crisped in the oven.", 'prep_time': '25 mins', 'cook_time': '50 mins', 'total_time': '1 hr 15 mins', 'serving': 4, 'ingredients': [{'quantity': '1 1/4', 'unit': 'pounds', 'name': 'boneless skinless chicken thighs'}, {'quantity': '4', 'unit': 'tablespoons', 'name': 'olive oi'}, {'quantity': '2', 'unit': 'teaspoons', 'name': 'seasoning,'}, {'quantity': '1/2', 'unit': 'teaspoon', 'name': 'paprika'}, {'quantity': '2', 'unit': 'cloves', 'name': 'garlic,'}, {'quantity': '1/4', 'unit': 'teaspoon', 'name': 'kosher salt'}], 'Directions': {'step_1': 'Preheat the oven to 400 degrees F (200 degrees C). Lightly grease a baking sheet or line with parchment.', 'step_2': 'Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside.', 'step_3': 'For dressing, whisk olive oil, red wine vinegar, pepper brine, honey, Dijon mustard, salt, and black pepper together in a small bowl until well combined; set aside.', 'step_4': 'Combine cooked rice and soy sauce with remaining 3 tablespoons olive oil and 1 teaspoon Greek seasoning in a bowl. Spread rice onto the prepared baking sheet.', 'step_5': 'Bake rice in the preheated oven until rice is crispy and lightly browned, about 40 minutes.', 'step_6': 'Meanwhile, heat a small amount of oil in a skillet over medium-high heat. Add chicken and cook, undisturbed, until chicken is browned on one side and releases easily from pan, 3 to 4 minutes. Continue to cook and stir until chicken is no longer pink at the center and browned on all sides, about 4 minutes more. Add water to the skillet and continue to stir until bottom of skillet is deglazed. Remove from heat.', 'step_7': 'To serve, divide chicken, tomatoes, cucumber, red onion, banana peppers, parsley, and olives among 4 bowls. Top evenly with crispy rice and feta cheese and drizzle with dressing.'}, 'nutrition': {'calories': '759', 'fat': '46g', 'carbs': '46g', 'protein': '42g'}}
         self.data = None
+        self.parsed_data = {
+            "Ingredients": [],
+            "Tools": [],
+            "Methods_primary": [],
+            "Methods_other": [],
+            "Steps": []
+        }
 
     def load_data(self):
         # Implement data loading logic here
