@@ -1,5 +1,8 @@
+from spacy.tokenizer import Tokenizer 
 from bs4 import BeautifulSoup
 import requests
+import re
+import spacy
 
 class Parser:
     def __init__(self, data_url):
@@ -26,6 +29,14 @@ class Parser:
             "Methods_other": [],
             "Steps": []
         }
+        self.nlp = spacy.load("en_core_web_sm")
+        self.nlp.tokenizer = self.custom_tokenizer(self.nlp)
+
+    def custom_tokenizer(self, nlp):
+        pattern = re.compile(r"^[A-Za-z0-9]+(?:[-–—][A-Za-z0-9]+)+$")
+        tokenizer = nlp.tokenizer
+        tokenizer.token_match = pattern.match
+        return tokenizer
 
     def load_data(self):
         # Implement data loading logic here
@@ -74,6 +85,13 @@ class Parser:
             quantity = full_text.find("span", attrs={"data-ingredient-quantity": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-quantity": True}) else ""
             unit = full_text.find("span", attrs={"data-ingredient-unit": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-unit": True}) else ""
             name = full_text.find("span", attrs={"data-ingredient-name": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-name": True}) else ""
+            other= None
+            for content in full_text.contents:
+                if isinstance(content, str):
+                    other = content.strip()
+            if other:
+                name = name + " " + other
+                name = name.strip()
             ingredient_dict = {
                 "quantity": quantity,
                 "unit": unit,
@@ -100,9 +118,116 @@ class Parser:
                 self.webpage["nutrition"][nutrient_name] = nutrient_value
         print(self.webpage)
 
+    def _parse_ingredients(self):
+        for ing in self.webpage.get("ingredients", []):
+            quantity = ing.get("quantity") or ""
+            measurement = ing.get("unit") or ""
+            name_raw = ing.get("name") or ""
+            full_text = f"{quantity} {measurement} {name_raw}".strip()
+
+            descriptor = None
+            preparation = None
+
+            doc_main = self.nlp(name_raw)
+
+            descriptors_list = []
+            # find adj
+            for token in doc_main:
+                if token.pos_ in ["ADJ","VERB"] and token.dep_ in ["amod","acomp"]:
+                    descriptors_list.append(token.text)
+            for i, token in enumerate(doc_main[:-1]): 
+                if token.text.lower() == "to" and token.pos_ == "PART":
+                    next_token = doc_main[i + 1]
+                    if next_token.pos_ == "VERB" and "VerbForm=Inf" in next_token.morph:
+                        descriptors_list.append(f"to {next_token.text}")
+            if not descriptors_list:
+                for token in doc_main:
+                    if token.pos_ == "NUM" and token.dep_ in ["nummod", "compound"]:
+                        descriptors_list.append(token.text)
+            if not descriptors_list:
+                for token in doc_main:
+                    if token.pos_ == "VERB" and token.dep_ == "ROOT":
+                        descriptors_list.append(token.text)
+            if descriptors_list:
+                descriptor = " ".join(descriptors_list)
+
+            preparation_list = []
+            after_comma = False
+            if len(name_raw.split(",")) > 1:
+                for token in doc_main:
+                    if "PunctType=Comm" in token.morph:
+                        after_comma = True
+                        continue
+                    if not after_comma:
+                        continue
+                    if after_comma:
+                        if token.pos_ == "VERB" and ("VerbForm=Part" in token.morph or "VerbForm=Fin" in token.morph):
+                            preparation_list.append(token.text)
+                            for child in token.subtree:
+                                if child.i > token.i:
+                                    preparation_list.append(child.text)
+                            break
+
+            if preparation_list:
+                preparation = " ".join(preparation_list)
+
+            for token in doc_main:
+                print(f"  {token.text:15} {token.pos_:10} {token.dep_:10} {token.morph}")
+            name_list = []
+            for token in doc_main:
+                if token.pos_ in ["NOUN", "PROPN", "ADJ"] and token.dep_ in ["compound","amod"]:
+                    name_list.append(token.text)
+                if token.pos_ in ["NOUN", "PROPN"] and token.dep_ in ["nsubj","ROOT", "dobj"]:
+                    name_list.append(token.text)
+                    break
+            name = " ".join(name_list)
+
+
+            if preparation:
+                preparation = preparation.strip().strip(",.")
+            if descriptor:
+                descriptor = descriptor.strip().strip(",.")
+            name = name.strip().strip(",.")
+
+            self.parsed_data["Ingredients"].append({
+                "full_text": full_text,
+                "name": name,
+                "quantity": quantity,
+                "measurement": measurement,
+                "descriptor": descriptor,
+                "preparation": preparation
+            })
+
     def parse(self):
         self.load_data()
         # Implement parsing logic here
+        self._parse_ingredients()
+        self._parse_steps()
         pass
 
 # TA suggested sentence splitting within steps
+
+    @staticmethod
+    def ingredients_test():
+        parser = Parser("https://www.allrecipes.com/tennessee-onions-recipe-8609254")
+        parser.load_data()
+        parser._parse_ingredients()
+        for ing in parser.parsed_data["Ingredients"]:
+            print(ing)
+
+    @staticmethod
+    def spacy_test():
+        parser = Parser("https://www.allrecipes.com/tennessee-onions-recipe-8609254")
+        test_sentences = [
+            "1 teaspoon garlic powder",
+        ]
+        for sentence in test_sentences:
+            doc = parser.nlp(sentence)
+            print(f"Sentence: {sentence}")
+            for token in doc:
+                print(f"  {token.text:15} {token.pos_:10} {token.dep_:10} {token.morph}")
+            print()
+
+if __name__ == "__main__":
+    Parser.ingredients_test()
+    # Parser.spacy_test()
