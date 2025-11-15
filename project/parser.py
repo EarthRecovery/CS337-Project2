@@ -32,6 +32,53 @@ class Parser:
         self.nlp = spacy.load("en_core_web_sm")
         self.nlp.tokenizer = self.custom_tokenizer(self.nlp)
 
+    @staticmethod
+    def fix_imperative_verbs(doc):
+        """
+        Fix spaCy errors when parsing imperative verbs at the beginning of recipe steps,
+        without using a verb lexicon, and supporting multi-sentence docs.
+        """
+
+        for sent in doc.sents:
+            if len(sent) == 0:
+                continue
+            
+            token = sent[0]   # first token of the sentence
+            
+            # Skip if spaCy already recognized as a verb
+            if token.pos_ in ["VERB", "AUX"]:
+                continue
+
+            # Heuristic 1: ROOT but not verb → imperative verb
+            if token.dep_ == "ROOT":
+                token.pos_ = "VERB"
+                token.tag_ = "VB"
+                continue
+
+            # Heuristic 2: next token is ADP/ADV/DET → typical structure of imperative sentence
+            if len(sent) > 1:
+                next_pos = sent[1].pos_
+                if next_pos in ["ADP", "ADV", "DET"]:
+                    token.pos_ = "VERB"
+                    token.tag_ = "VB"
+                    continue
+            
+            # Heuristic 3: token is capitalized + looks like a verb form (lemma == lowercase word)
+            # Example: "Top", lemma="top"
+            if token.text[0].isupper() and token.lemma_.lower() == token.text.lower():
+                token.pos_ = "VERB"
+                token.tag_ = "VB"
+                continue
+
+            # Heuristic 4: token is alphabetic and not a noun-like POS
+            # (avoid misclassifying proper nouns)
+            if token.pos_ in ["ADV", "NOUN", "PROPN", "ADJ"] and token.text.isalpha():
+                token.pos_ = "VERB"
+                token.tag_ = "VB"
+                continue
+
+        return doc
+
     def custom_tokenizer(self, nlp):
         pattern = re.compile(r"^[A-Za-z0-9]+(?:[-–—][A-Za-z0-9]+)+$")
         tokenizer = nlp.tokenizer
@@ -198,6 +245,73 @@ class Parser:
                 "preparation": preparation
             })
 
+    def _parse_steps(self):
+        for step_key, step_desc in self.webpage.get("Directions", {}).items():
+            step_dict = self._parse_one_step(step_desc, step_key)
+            self.parsed_data["Steps"].append(step_dict)
+
+    @staticmethod
+    def extract_noun_phrases(doc):
+        noun_phrases = []
+
+        for token in doc:
+            if token.pos_ in ["NOUN", "PROPN"]:
+                modifiers = []
+
+                # (amod / compound / nummod / det)
+                for child in token.children:
+                    if child.dep_ in ["amod", "compound", "nummod", "det"]:
+                        modifiers.append(child)
+
+                modifiers = sorted(modifiers, key=lambda x: x.i)
+
+                phrase_tokens = modifiers + [token]
+                phrase = " ".join(w.text for w in phrase_tokens)
+
+                noun_phrases.append(phrase)
+
+        return noun_phrases
+
+    def _parse_one_step(self, step_desc, step_key):
+        step_dict = {
+            "step_number": int(step_key.split("_")[1]),
+            "description": step_desc,
+            "ingredients": [],
+            "tools": [],
+            "methods": [],
+            "time": {},
+            "temperature": {},
+            "context": {
+                "references": [],
+                "warnings": []
+            }
+        }
+        doc_step = self.nlp(step_desc)
+        doc_step = self.fix_imperative_verbs(doc_step)
+
+        # get verbs tools and ingredients
+        for token in doc_step:
+            if token.pos_ == "VERB":
+                step_dict["methods"].append(token.lemma_)
+        
+        noun_phrase = self.extract_noun_phrases(doc_step)
+        ingredients = []
+        for ing in self.parsed_data["Ingredients"]:
+            ingredients.append(ing["name"].lower())
+        print(ingredients)
+        print(noun_phrase)
+        for np in noun_phrase:
+            words = np.lower().split()
+            for word in words:
+                for ing in ingredients:
+                    if word in ing.split():
+                        step_dict["ingredients"].append(np)
+                        noun_phrase.remove(np)
+
+        step_dict["tools"] = noun_phrase
+
+        print(step_dict)
+
     def parse(self):
         self.load_data()
         # Implement parsing logic here
@@ -228,6 +342,23 @@ class Parser:
                 print(f"  {token.text:15} {token.pos_:10} {token.dep_:10} {token.morph}")
             print()
 
+    @staticmethod
+    def steps_test():
+        parser = Parser("https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475")
+        parser.load_data()
+        parser._parse_ingredients()
+        step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside. "
+        doc_step = parser.nlp(step)
+        doc_step = parser.fix_imperative_verbs(doc_step)
+        parser._parse_one_step(step, "step_1")
+
 if __name__ == "__main__":
-    Parser.ingredients_test()
+    # Parser.ingredients_test()
     # Parser.spacy_test()
+    parser = Parser("https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475")
+    parser.load_data()
+    parser._parse_ingredients()
+    step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside. "
+    doc_step = parser.nlp(step)
+    doc_step = parser.fix_imperative_verbs(doc_step)
+    parser._parse_one_step(step, "step_1")
