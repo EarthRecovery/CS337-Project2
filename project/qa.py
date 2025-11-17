@@ -1,5 +1,5 @@
 class QuestionTypes():
-
+    
     # recipe retrieval and display
     INGREDIENT_LIST = 1 # ex: "show me the ingredients list"
     TOOL_LIST       = 2 # ex: "show me what tools i'll need"
@@ -14,14 +14,14 @@ class QuestionTypes():
     # parameters of the current step
     QUANTITY        = 8 # ex: "how much of <ingredient> do I need?"
     TEMPERATURE     = 9 # ex: "what temperature?" 
-    TIME            = 10 # ex: "how long do I <specific technique>?"
+    TIME            = 10 # ex: "how long do i <specific technique>?"
     DONENESS        = 11 # ex: "when is it done?"
-    SUBSTITUION     = 12 # ex: "can I use <ingredient or tool> instead of <ingredient or tool>"
+    SUBSTITUION     = 12 # ex: "can i use <ingredient or tool> instead of <ingredient or tool>"
 
     # simple "what is", specific "how to", and vague "how to" questions
     WHAT_IS         = 13 # ex: "what is a <tool being mentioned>?"
-    HOW_TO_SPECIFIC = 14 # ex: "how do I <specific technique>?"
-    HOW_TO_VAGUE    = 15 # ex: "how do I do that?" – (use conversation history to infer what “that” refers to)
+    HOW_TO_SPECIFIC = 14 # ex: "how do i <specific technique>?"
+    HOW_TO_VAGUE    = 15 # ex: "how do i do that?" – (use conversation history to infer what “that” refers to)
 
     # none of the above
     UNKNOWN         = 16 # ex: "how is barack obama feeling this afternoon?"
