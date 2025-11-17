@@ -298,6 +298,7 @@ class Parser:
         ingredients = []
         for ing in self.parsed_data["Ingredients"]:
             ingredients.append(ing["name"].lower())
+        matched = []
         print(ingredients)
         print(noun_phrase)
         for np in noun_phrase:
@@ -306,9 +307,24 @@ class Parser:
                 for ing in ingredients:
                     if word in ing.split():
                         step_dict["ingredients"].append(np)
-                        noun_phrase.remove(np)
+                        matched.append(np)
 
-        step_dict["tools"] = noun_phrase
+        for np in noun_phrase:
+            if np not in matched:
+                step_dict["tools"].append(np)
+
+        # time and temperature extraction
+        for token in doc_step:
+            if token.like_num:
+                next_token = None
+                if token.i + 1 < len(doc_step):
+                    next_token = doc_step[token.i + 1]
+                if next_token and next_token.pos_ in ["NOUN", "PROPN"]:
+                    if next_token.text.lower() in ["minutes", "minute", "hours", "hour", "secs", "seconds", "sec", "mins"]:
+                        step_dict["time"] = f"{token.text} {next_token.text}"
+                    elif next_token.text.lower() in ["°f", "°c", "degrees", "degree", "f", "c"]:
+                        step_dict["temperature"] = f"{token.text} {next_token.text}"
+
 
         print(step_dict)
 
@@ -353,12 +369,13 @@ class Parser:
         parser._parse_one_step(step, "step_1")
 
 if __name__ == "__main__":
-    # Parser.ingredients_test()
+    Parser.ingredients_test()
     # Parser.spacy_test()
-    parser = Parser("https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475")
-    parser.load_data()
-    parser._parse_ingredients()
-    step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside. "
-    doc_step = parser.nlp(step)
-    doc_step = parser.fix_imperative_verbs(doc_step)
-    parser._parse_one_step(step, "step_1")
+    # parser = Parser("https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475")
+    # parser.load_data()
+    # parser._parse_ingredients()
+    # # step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside. "
+    # step = "Whisk together 1 tablespoon maple syrup, olive oil, salt, and pepper in a large bowl. Add Brussels sprouts and toss to coat. Arrange Brussels sprouts in a single layer in an air fryer basket without overcrowding; work in batches, if necessary. Cook for 4 minutes. Shake basket and cook until sprouts are deep golden brown and tender, 4 to 6 minutes more."
+    # doc_step = parser.nlp(step)
+    # doc_step = parser.fix_imperative_verbs(doc_step)
+    # parser._parse_one_step(step, "step_1")
