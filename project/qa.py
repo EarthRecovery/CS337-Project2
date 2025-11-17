@@ -1,31 +1,29 @@
+from spacy.tokenizer import Tokenizer 
+import re
+import spacy
+
 class QuestionTypes():
-    
     # recipe retrieval and display
     INGREDIENT_LIST = 1 # ex: "show me the ingredients list"
     TOOL_LIST       = 2 # ex: "show me what tools i'll need"
     METHOD_LIST     = 3 # ex: "what cooking techniques will i have to do?"
-
     # navigation utterances
     STEP_NEXT       = 4 # ex: "go to the next step"
     STEP_PREVIOUS   = 5 # ex: "go to the previous step"
     STEP_REPEAT     = 6 # ex: "repeat please"
     STEP_GOTO       = 7 # ex: "go to step n"
-
     # parameters of the current step
     QUANTITY        = 8 # ex: "how much of <ingredient> do I need?"
     TEMPERATURE     = 9 # ex: "what temperature?" 
     TIME            = 10 # ex: "how long do i <specific technique>?"
     DONENESS        = 11 # ex: "when is it done?"
     SUBSTITUION     = 12 # ex: "can i use <ingredient or tool> instead of <ingredient or tool>"
-
     # simple "what is", specific "how to", and vague "how to" questions
     WHAT_IS         = 13 # ex: "what is a <tool being mentioned>?"
     HOW_TO_SPECIFIC = 14 # ex: "how do i <specific technique>?"
     HOW_TO_VAGUE    = 15 # ex: "how do i do that?" – (use conversation history to infer what “that” refers to)
-
     # none of the above
     UNKNOWN         = 16 # ex: "how is barack obama feeling this afternoon?"
-
 
 class QA:
     def __init__(self, model):
@@ -52,17 +50,74 @@ class QA:
         """
         self.history = {} # what has been inputted (and outputted) already
         self.question_types = QuestionTypes
+        self.nlp = spacy.load("en_core_web_sm")
+
+
+    def _classify_question(self, question):
+        # basic tokenization + lowercasing
+        q = question.lower().strip()
+        doc_question = self.nlp(q)
+        tokens = [token for token in doc_question]
+
+        # assertain question type (VERY BASIC NEEDS MORE LATER)
+        if "ingredient" in tokens:
+            return QuestionTypes.INGREDIENT_LIST
+        if "tool" in tokens:
+            return QuestionTypes.TOOL_LIST
+        if "method" in tokens or "technique" in tokens:
+            return QuestionTypes.METHOD_LIST
+        
+        if "next step" in q:
+            return QuestionTypes.STEP_NEXT
+        if ("previous" in tokens or "last" in tokens) and "step" in tokens:
+            return QuestionTypes.STEP_PREVIOUS
+        if "repeat" in tokens:
+            return QuestionTypes.STEP_REPEAT
+        if re.search(r"\bstep\s+(\d+)", q):
+            return QuestionTypes.STEP_GOTO
+        if "how" in tokens and "much" in tokens:
+            return QuestionTypes.QUANTITY
+        
+        if "temperature" in tokens:
+            return QuestionTypes.TEMPERATURE
+        if "time" in tokens or ("how long" in q):
+            return QuestionTypes.TIME
+        if "done" in tokens or "ready" in tokens:
+            return QuestionTypes.DONENESS
+        if "substitute" in tokens or "replace" in tokens:
+            return QuestionTypes.SUBSTITUION
+        
+        if q.startswith("what is"):
+            return QuestionTypes.WHAT_IS
+        if q.startswith("how do"):
+            return QuestionTypes.HOW_TO_SPECIFIC
+
+        # FIGURE OUT SOME LOGIC FOR THIS
+        """ 
+        return QuestionTypes.HOW_TO_VAGUE
+        """
+
+        # if nothing else
+        return QuestionTypes.UNKNOWN
+
+
+    def _extractor(self, question, question_type):
+        pass
 
     def question_parser(self, question):
-        # parse the input question, identify its type and relevant context
-        pass
+        question_type = self._classify_question(question)
+        relevant = self._extractor(question, question_type)
+        return {"question": question,       # verbatim question
+                "type":     question_type,  # question type
+                "relevant": relevant        # revelant context
+                }
 
     def run(self):
         # Implement QA main loop here
         while True:
             # maybe speech to text
             # get_question()
-            question_parsed_data  = self.question_parser(input("Please enter your question: "))
+            question_parsed_data = self.question_parser(input("Please enter your question: "))
 
             # handle data and choose appropriate response
             # look from parser data or get url/youtube by calling agent()

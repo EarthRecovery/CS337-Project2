@@ -335,8 +335,6 @@ class Parser:
         self._parse_steps()
         pass
 
-# TA suggested sentence splitting within steps
-
     @staticmethod
     def ingredients_test():
         parser = Parser("https://www.allrecipes.com/tennessee-onions-recipe-8609254")
