@@ -463,7 +463,7 @@ class Parser:
         parser._parse_one_step(step, "step_1")
 
 if __name__ == "__main__":
-    parser = Parser("https://www.allrecipes.com/recipe/275427/air-fryer-roasted-brussels-sprouts-with-maple-mustard-mayo/")
+    parser = Parser("https://www.allrecipes.com/recipe/8177/sweet-potato-cheesecake/")
     parser.parse()
     print(parser.webpage)
     print(parser.parsed_data)
