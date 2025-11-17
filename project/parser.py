@@ -427,7 +427,7 @@ class Parser:
         self._parse_ingredients()
         self._parse_steps()
         self._add_other_info()
-        pass
+        return self.parsed_data
 
 # TA suggested sentence splitting within steps
 
