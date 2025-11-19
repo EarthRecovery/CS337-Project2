@@ -1,10 +1,53 @@
-from spacy.tokenizer import Tokenizer 
+from spacy.tokenizer import Tokenizer
 from bs4 import BeautifulSoup
 import requests
 import re
 import spacy
 
+
 class Parser:
+    # ----- Patterns for Different Information Types -----
+    WARNING_PATTERNS = [
+        re.compile(r"\bbe careful\b", re.IGNORECASE),
+        re.compile(r"\bdo not\b", re.IGNORECASE),
+        re.compile(r"\bdon't\b", re.IGNORECASE),
+        re.compile(r"\bavoid\b", re.IGNORECASE),
+        re.compile(r"\bmake sure\b", re.IGNORECASE),
+        re.compile(r"\bensure\b", re.IGNORECASE),
+        re.compile(r"\bbe sure\b", re.IGNORECASE),
+        re.compile(r"\bbe cautious\b", re.IGNORECASE),
+    ]
+
+    ADVICE_PATTERNS = [
+        re.compile(r"\byou can\b", re.IGNORECASE),
+        re.compile(r"\boptional\b", re.IGNORECASE),
+        re.compile(r"\bif you prefer\b", re.IGNORECASE),
+        re.compile(r"\bit'?s ok\b", re.IGNORECASE),
+        re.compile(r"\bit'?s okay\b", re.IGNORECASE),
+        re.compile(r"\bit is ok\b", re.IGNORECASE),
+        re.compile(r"\bit is okay\b", re.IGNORECASE),
+        re.compile(r"\byou may\b", re.IGNORECASE),
+        re.compile(r"\bfeel free to\b", re.IGNORECASE),
+    ]
+
+    OBS_PATTERNS = [
+        # Non-greedy "until" — stops before ., ;, and, but
+        re.compile(r"\buntil\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+
+        # "when" conditions (non-greedy)
+        re.compile(r"\bwhen\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+
+        # "will become", "will look", "will thicken" — non-greedy
+        re.compile(r"\bwill become\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+        re.compile(r"\bwill look\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+        re.compile(r"\bwill thicken\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+
+        # Common cooking state descriptors
+        re.compile(r"\bshould be\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+        re.compile(r"\bturn(s)? (?:golden|brown|opaque)\b.*?(?=\.|;|,| and | but |$)", re.IGNORECASE),
+    ]
+
+
     def __init__(self, data_url):
         self.data_url = data_url
         self.webpage = {
@@ -16,11 +59,12 @@ class Parser:
             "total_time": "",
             "serving": 0,
             "ingredients": [],
-            "Directions":{},
+            "Directions": {},
             "nutrition": {}
         }
-        # example output: 
-        # {'url': 'https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475', 'dish_name': 'Mediterranean Crispy Rice Chicken Bowl', 'dish_intro': "This Mediterranean crispy rice chicken bowl features Greek flavors from seasoned chicken, tomatoes, Kalamata olives, feta cheese, banana peppers, and cucumber. It's dressed with a red wine vinaigrette, then topped with crunchy rice, crisped in the oven.", 'prep_time': '25 mins', 'cook_time': '50 mins', 'total_time': '1 hr 15 mins', 'serving': 4, 'ingredients': [{'quantity': '1 1/4', 'unit': 'pounds', 'name': 'boneless skinless chicken thighs'}, {'quantity': '4', 'unit': 'tablespoons', 'name': 'olive oi'}, {'quantity': '2', 'unit': 'teaspoons', 'name': 'seasoning,'}, {'quantity': '1/2', 'unit': 'teaspoon', 'name': 'paprika'}, {'quantity': '2', 'unit': 'cloves', 'name': 'garlic,'}, {'quantity': '1/4', 'unit': 'teaspoon', 'name': 'kosher salt'}], 'Directions': {'step_1': 'Preheat the oven to 400 degrees F (200 degrees C). Lightly grease a baking sheet or line with parchment.', 'step_2': 'Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside.', 'step_3': 'For dressing, whisk olive oil, red wine vinegar, pepper brine, honey, Dijon mustard, salt, and black pepper together in a small bowl until well combined; set aside.', 'step_4': 'Combine cooked rice and soy sauce with remaining 3 tablespoons olive oil and 1 teaspoon Greek seasoning in a bowl. Spread rice onto the prepared baking sheet.', 'step_5': 'Bake rice in the preheated oven until rice is crispy and lightly browned, about 40 minutes.', 'step_6': 'Meanwhile, heat a small amount of oil in a skillet over medium-high heat. Add chicken and cook, undisturbed, until chicken is browned on one side and releases easily from pan, 3 to 4 minutes. Continue to cook and stir until chicken is no longer pink at the center and browned on all sides, about 4 minutes more. Add water to the skillet and continue to stir until bottom of skillet is deglazed. Remove from heat.', 'step_7': 'To serve, divide chicken, tomatoes, cucumber, red onion, banana peppers, parsley, and olives among 4 bowls. Top evenly with crispy rice and feta cheese and drizzle with dressing.'}, 'nutrition': {'calories': '759', 'fat': '46g', 'carbs': '46g', 'protein': '42g'}}
+        # example output:
+        # {'url': 'https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475', ...}
+
         self.data = None
         self.parsed_data = {
             "url": data_url,
@@ -37,6 +81,14 @@ class Parser:
             "Steps": [],
             "Nutrition": {}
         }
+
+        # ---- Global context state: used for context propagation across steps ----
+        self.context_state = {
+            "oven_preheated": False,
+            "oven_temp": None,        # e.g. "350 degrees F"
+            "prepared_items": set(),  # e.g. {"mixture_step_2", "frosting_step_4"}
+        }
+
         self.nlp = spacy.load("en_core_web_sm")
         self.nlp.tokenizer = self.custom_tokenizer(self.nlp)
 
@@ -46,13 +98,12 @@ class Parser:
         Fix spaCy errors when parsing imperative verbs at the beginning of recipe steps,
         without using a verb lexicon, and supporting multi-sentence docs.
         """
-
         for sent in doc.sents:
             if len(sent) == 0:
                 continue
-            
+
             token = sent[0]   # first token of the sentence
-            
+
             # Skip if spaCy already recognized as a verb
             if token.pos_ in ["VERB", "AUX"]:
                 continue
@@ -70,7 +121,7 @@ class Parser:
                     token.pos_ = "VERB"
                     token.tag_ = "VB"
                     continue
-            
+
             # Heuristic 3: token is capitalized + looks like a verb form (lemma == lowercase word)
             # Example: "Top", lemma="top"
             if token.text[0].isupper() and token.lemma_.lower() == token.text.lower():
@@ -101,7 +152,7 @@ class Parser:
         resp = requests.get(self.data_url, headers=headers)
         if resp.status_code != 200:
             raise Exception(f"Failed to load page: {resp.status_code}")
-        
+
         soup = BeautifulSoup(resp.text, "html.parser")
         # dish_name
         name_tag = soup.find("h1", class_="article-heading")
@@ -133,14 +184,16 @@ class Parser:
                     self.webpage["serving"] = 0
 
         # ingredients
-        ingredients_ul = soup.find("ul", class_="mm-recipes-structured-ingredients__list")
-        ingredient_li = ingredients_ul.find_all("li", class_="mm-recipes-structured-ingredients__list-item") if ingredients_ul else []
+        ingredients_ul = soup.find_all("ul", class_="mm-recipes-structured-ingredients__list")
+        ingredient_li = []
+        for ul in ingredients_ul:
+            ingredient_li.extend(ul.find_all("li", class_="mm-recipes-structured-ingredients__list-item"))
         for ingredient in ingredient_li:
             full_text = ingredient.find_all("p")[0]
             quantity = full_text.find("span", attrs={"data-ingredient-quantity": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-quantity": True}) else ""
             unit = full_text.find("span", attrs={"data-ingredient-unit": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-unit": True}) else ""
             name = full_text.find("span", attrs={"data-ingredient-name": True}).get_text().strip() if full_text.find("span", attrs={"data-ingredient-name": True}) else ""
-            other= None
+            other = None
             for content in full_text.contents:
                 if isinstance(content, str):
                     other = content.strip()
@@ -179,6 +232,23 @@ class Parser:
             name_raw = ing.get("name") or ""
             full_text = f"{quantity} {measurement} {name_raw}".strip()
 
+            def ingredients_filter(text):
+                if not text:
+                    return ""
+
+                raw = text.strip()
+
+                # remove extra info in parentheses and after "such as", "like"
+                raw = re.sub(r"\(.*?\)", "", raw)
+
+                # remove "such as X", "like X"
+                raw = re.sub(r"\bsuch as\b.*", "", raw, flags=re.IGNORECASE)
+                raw = re.sub(r"\blike\b.*", "", raw, flags=re.IGNORECASE)
+
+                return raw
+
+            name_raw = ingredients_filter(name_raw)
+
             descriptor = None
             preparation = None
 
@@ -187,9 +257,9 @@ class Parser:
             descriptors_list = []
             # find adj
             for token in doc_main:
-                if token.pos_ in ["ADJ","VERB"] and token.dep_ in ["amod","acomp"]:
+                if token.pos_ in ["ADJ", "VERB"] and token.dep_ in ["amod", "acomp"]:
                     descriptors_list.append(token.text)
-            for i, token in enumerate(doc_main[:-1]): 
+            for i, token in enumerate(doc_main[:-1]):
                 if token.text.lower() == "to" and token.pos_ == "PART":
                     next_token = doc_main[i + 1]
                     if next_token.pos_ == "VERB" and "VerbForm=Inf" in next_token.morph:
@@ -227,13 +297,12 @@ class Parser:
 
             name_list = []
             for token in doc_main:
-                if token.pos_ in ["NOUN", "PROPN", "ADJ"] and token.dep_ in ["compound","amod"]:
+                if token.pos_ in ["NOUN", "PROPN", "ADJ"] and token.dep_ in ["compound", "amod"]:
                     name_list.append(token.text)
-                if token.pos_ in ["NOUN", "PROPN"] and token.dep_ in ["nsubj","ROOT", "dobj"]:
+                if token.pos_ in ["NOUN", "PROPN"] and token.dep_ in ["nsubj", "ROOT", "dobj"]:
                     name_list.append(token.text)
                     break
             name = " ".join(name_list)
-
 
             if preparation:
                 preparation = preparation.strip().strip(",.")
@@ -250,7 +319,7 @@ class Parser:
                 "preparation": preparation
             })
 
-    def keep_longest_unique(self,strings):
+    def keep_longest_unique(self, strings):
         strings = list(set(s.strip() for s in strings if s and s.strip()))
         strings.sort(key=len, reverse=True)
 
@@ -262,6 +331,13 @@ class Parser:
         return result
 
     def _parse_steps(self):
+        # Reset context for a fresh parse
+        self.context_state = {
+            "oven_preheated": False,
+            "oven_temp": None,
+            "prepared_items": set(),
+        }
+
         for step_key, step_desc in self.webpage.get("Directions", {}).items():
             step_dict = self._parse_one_step(step_desc, step_key)
             self.parsed_data["Steps"].append(step_dict)
@@ -295,9 +371,24 @@ class Parser:
 
         return noun_phrases
 
+    def pos_filter_tool(self, tool, nlp):
+        doc = nlp(tool)
+        has_noun = any(t.pos_ in ["NOUN", "PROPN"] for t in doc)
+        if not has_noun:
+            return False
+        last_token = doc[-1]
+        if last_token.pos_ not in ["NOUN", "PROPN"]:
+            return False
+        banned_abstract = {"shape", "piece", "head", "turkey", "circle", "bottom", "center"}
+        root = doc[0].lemma_
+        if root in banned_abstract:
+            return False
+        return True
+
     def _parse_one_step(self, step_desc, step_key):
+        step_number = int(step_key.split("_")[1])
         step_dict = {
-            "step_number": int(step_key.split("_")[1]),
+            "step_number": step_number,
             "description": step_desc,
             "ingredients": [],
             "tools": [],
@@ -306,7 +397,13 @@ class Parser:
             "temperature": {},
             "context": {
                 "references": [],
-                "warnings": []
+                "warnings": [],
+                "advice": [],
+                "observations": [],
+                # initial context from global state (before this step's updates)
+                "oven_preheated": self.context_state.get("oven_preheated"),
+                "oven_temperature": self.context_state.get("oven_temp"),
+                "available_mixtures": list(self.context_state.get("prepared_items", [])),
             }
         }
 
@@ -332,19 +429,25 @@ class Parser:
             return result
 
         TOOL_NOISE = {
-            "minutes", "minute", "hours", "hour", "secs", "seconds", "sec", "degrees", "degree"
+            "minutes", "minute", "hours", "hour", "secs", "seconds", "sec", "degrees", "degree","shape", "piece", "head", "turkey", "circle", "bottom", "center",
+    "formation", "feathers", "beak", "brownie", "line", "half",
+        }
+        TOOL_NOISE_SIMPLE = {
+            "f", "c", "°f", "°c"
         }
 
+        # ---- Methods (verbs) ----
         for token in doc_step:
             if token.pos_ == "VERB":
                 step_dict["methods"].append(token.lemma_)
 
         step_dict["methods"] = unique_keep_order(step_dict["methods"])
 
-
+        # ---- Noun phrases ----
         noun_phrase = self.extract_noun_phrases(doc_step)
         noun_phrase = filter_longest_phrases(noun_phrase)
 
+        # ---- Ingredients matching ----
         ingredients_list = sorted(
             [ing["name"].lower() for ing in self.parsed_data["Ingredients"]],
             key=len,
@@ -359,21 +462,17 @@ class Parser:
             for ing in ingredients_list:
                 ing_low = ing.lower()
 
-                if ing_low in np_low:
-                    matched.append(np)
-                    step_dict["ingredients"].append(np)
-                    break
-
+                np_tokens = np_low.split()
                 ing_tokens = ing_low.split()
-                if len(ing_tokens) >= 2:
-                    head = ing_tokens[-1] 
-                    if head in np_low:
+                for np_token in np_tokens:
+                    if np_token in ing_tokens:
                         matched.append(np)
                         step_dict["ingredients"].append(np)
                         break
 
         step_dict["ingredients"] = unique_keep_order(step_dict["ingredients"])
 
+        # ---- Tools: noun phrases not used as ingredients, + filters ----
         tools_raw = [np for np in noun_phrase if np not in matched]
 
         tools_clean = []
@@ -383,10 +482,15 @@ class Parser:
                 continue
             if any(ch.isdigit() for ch in t_low):
                 continue
+            if t_low in TOOL_NOISE_SIMPLE:
+                continue
+            if not self.pos_filter_tool(t, self.nlp):
+                continue
             tools_clean.append(t)
 
         step_dict["tools"] = unique_keep_order(tools_clean)
 
+        # ---- Time & Temperature ----
         for token in doc_step:
             if token.like_num:
                 next_token = None
@@ -394,7 +498,7 @@ class Parser:
                     next_token = doc_step[token.i + 1]
 
                 if next_token and next_token.pos_ in ["NOUN", "PROPN"]:
-
+                    # time
                     if next_token.text.lower() in [
                         "minutes", "minute", "hours", "hour",
                         "secs", "seconds", "sec", "mins"
@@ -402,12 +506,49 @@ class Parser:
                         step_dict["time"] = f"{token.text} {next_token.text}"
                         continue
 
-                    # temperature
-                    if next_token.text.lower() in [
-                        "°f", "°c", "degrees", "degree", "f", "c"
-                    ]:
+                    # temperature: 350 degrees F
+                    if next_token.text.lower() in ["degrees"]:
+                        if token.i + 2 < len(doc_step):
+                            next_next_token = doc_step[token.i + 2]
+                            if next_next_token.text.lower() in ["°f", "°c", "f", "c"]:
+                                step_dict["temperature"] = f"{token.text} {next_token.text} {next_next_token.text}"
+                                continue
+
+                    # temperature: 350 F / 175 C
+                    if next_token.text.lower() in ["°f", "°c", "degrees", "degree", "f", "c"]:
                         step_dict["temperature"] = f"{token.text} {next_token.text}"
                         continue
+
+        # ---- Differentiate information types: warnings / advice / observations ----
+        # warnings
+        for pat in self.WARNING_PATTERNS:
+            m = pat.search(step_desc)
+            if m:
+                step_dict["context"]["warnings"].append(step_desc[m.start():].strip())
+
+        # advice
+        for pat in self.ADVICE_PATTERNS:
+            m = pat.search(step_desc)
+            if m:
+                step_dict["context"]["advice"].append(step_desc[m.start():].strip())
+
+        # observations
+        for pat in self.OBS_PATTERNS:
+            m = pat.search(step_desc)
+            if m:
+                step_dict["context"]["observations"].append(step_desc[m.start():].strip())
+
+        # ---- Update global context_state AFTER interpreting this step ----
+        # 1) Oven preheat
+        if ("preheat" in step_dict["methods"] or "pre-heatt" in step_desc.lower()) and step_dict["temperature"]:
+            self.context_state["oven_preheated"] = True
+            self.context_state["oven_temp"] = step_dict["temperature"]
+
+        # 2) Mixture creation (combine / mix / stir)
+        if any(m in step_dict["methods"] for m in ["combine", "mix", "stir"]):
+            # create a generic mixture name tied to this step
+            mixture_name = f"mixture_step_{step_number}"
+            self.context_state["prepared_items"].add(mixture_name)
 
         return step_dict
 
@@ -423,13 +564,12 @@ class Parser:
 
     def parse(self):
         self.load_data()
-        # Implement parsing logic here
         self._parse_ingredients()
         self._parse_steps()
         self._add_other_info()
         return self.parsed_data
 
-# TA suggested sentence splitting within steps
+    # TA suggested sentence splitting within steps
 
     @staticmethod
     def ingredients_test():
@@ -457,13 +597,23 @@ class Parser:
         parser = Parser("https://www.allrecipes.com/mediterranean-crispy-rice-chicken-bowl-recipe-8778475")
         parser.load_data()
         parser._parse_ingredients()
-        step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside. "
+        step = "Combine chicken, 1 tablespoon oil, 1 teaspoon Greek seasoning, paprika, garlic, and salt in a bowl. Stir until well coated; set aside."
         doc_step = parser.nlp(step)
         doc_step = parser.fix_imperative_verbs(doc_step)
-        parser._parse_one_step(step, "step_1")
+        parsed = parser._parse_one_step(step, "step_1")
+        print(parsed)
+
+    @staticmethod
+    def show_parsed_data():
+        string = "the center"
+        nlp = spacy.load("en_core_web_sm")
+        doc = nlp(string)
+        for token in doc:
+            print(f"{token.text}: {token.pos_} {token.dep_} {token.morph}")
+
 
 if __name__ == "__main__":
-    parser = Parser("https://www.allrecipes.com/recipe/8177/sweet-potato-cheesecake/")
-    parser.parse()
-    print(parser.webpage)
-    print(parser.parsed_data)
+    parser = Parser("https://www.allrecipes.com/recipe/276135/mini-brownie-turkeys/")
+    parsed = parser.parse()
+    from pprint import pprint
+    pprint(parsed["Steps"])
