@@ -101,15 +101,104 @@ class QA:
 
 
     def _extractor(self, question, question_type):
-        pass
+        q = question.lower().strip()
+        # extract an integer after "step n"
+        def extract_step_number(q):
+            m = re.search(r"\bstep\s+(\d+)", q)
+            if m:
+                return int(m.group(1))  
+            else:
+                return None
+        # extract ingredient/tool/etc mentioned after "of", "for", "about", etc
+        def extract_keyword(q, candidates):
+            for c in candidates:
+                if c.lower() in q:
+                    return c
+            return None
+
+        # flatten lists from model
+        all_ingredients = []
+        all_tools = []
+        for step in self.model:
+            all_ingredients.extend(step.get("ingredients", []))
+            all_tools.extend(step.get("tools", []))
+
+        if question_type == self.question_types.INGREDIENT_LIST:
+            return {"items": all_ingredients}
+        if question_type == self.question_types.TOOL_LIST:
+            return {"items": all_tools}
+        if question_type == self.question_types.METHOD_LIST:
+            methods = []
+            for step in self.model:
+                methods.extend(step.get("methods", []))
+            return {"items": methods}
+
+        if question_type == self.question_types.STEP_NEXT:
+            return {"nav": "next"}
+        if question_type == self.question_types.STEP_PREVIOUS:
+            return {"nav": "previous"}
+        if question_type == self.question_types.STEP_REPEAT:
+            return {"nav": "repeat"}
+        if question_type == self.question_types.STEP_GOTO:
+            step_num = extract_step_number(q)
+            return {"nav": "goto", "step_number": step_num}
+
+        if question_type == self.question_types.QUANTITY:
+            ing = extract_keyword(q, all_ingredients)
+            return {"ingredient": ing}
+        if question_type == self.question_types.TEMPERATURE:
+            temp_target = extract_keyword(q, all_ingredients + ["oven"])
+            return {"target": temp_target}
+        if question_type == self.question_types.TIME:
+            method = extract_keyword(q, [m for step in self.model for m in step.get("methods", [])])
+            return {"method": method}
+        if question_type == self.question_types.DONENESS:
+            target = extract_keyword(q, all_ingredients + [m for step in self.model for m in step.get("methods", [])])
+            return {"target": target}
+
+        # MORE LOGIC REQUIRED FOR ALL 3, THIS IS SIMPLE TO (try and) GET CODE RUNNING
+        if question_type == self.question_types.SUBSTITUION:
+            m = re.search(r"use (.*?) instead of (.*)", q)
+            if m:
+                return {
+                    "new": m.group(1).strip(),
+                    "old": m.group(2).strip()
+                }
+            return {"new": None, "old": None}
+        if question_type == self.question_types.WHAT_IS:
+            m = re.search(r"(what is|what's)\s+(.*)", q)
+            if m:
+                term = m.group(2).rstrip("?").strip()
+                return {"term": term}
+            return {"term": None}
+        if question_type == self.question_types.HOW_TO_SPECIFIC:
+            m = re.search(r"how do i (.*)", q)
+            if m:
+                action = m.group(1).rstrip("?").strip()
+                return {"action": action}
+            return {"action": None}
+
+        # MORE LOGIC REQUIRED
+        """
+        # vague "how do I do that?"
+        if question_type == self.question_types.HOW_TO_VAGUE:
+            return {"refer_to_history": True}
+        """
+
+        # fallback (i.e. if UNKNOWN)
+        return {}
+
 
     def question_parser(self, question):
         question_type = self._classify_question(question)
         relevant = self._extractor(question, question_type)
         return {"question": question,       # verbatim question
                 "type":     question_type,  # question type
-                "relevant": relevant        # revelant context
+                "relevant": relevant        # revelant context (different for each question)
                 }
+        """
+        relevant has the follow types: "items", "nav", "ingrediant", "target", "method", "term", "action", and "new" "old" pa
+        """
 
     def run(self):
         # Implement QA main loop here
@@ -119,7 +208,9 @@ class QA:
             question_parsed_data = self.question_parser(input("Please enter your question: "))
 
             # handle data and choose appropriate response
+
             # look from parser data or get url/youtube by calling agent()
+            self.agent(question_parsed_data)
 
             # output the answer
 
@@ -134,3 +225,7 @@ class QA:
     def run_one_turn(self,question):
         # only for testing purposes
         pass 
+    
+if __name__ == "__main__":
+    # ADD TESTING HERE
+    pass
