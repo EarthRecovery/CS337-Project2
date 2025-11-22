@@ -1,8 +1,9 @@
 from spacy.tokenizer import Tokenizer 
+from enum import Enum
 import re
 import spacy
 
-class QuestionTypes():
+class QuestionTypes(Enum):
     # recipe retrieval and display
     INGREDIENT_LIST = 1 # ex: "show me the ingredients list"
     TOOL_LIST       = 2 # ex: "show me what tools i'll need"
@@ -197,7 +198,7 @@ class QA:
                 "relevant": relevant        # revelant context (different for each question)
                 }
         """
-        relevant has the follow types: "items", "nav", "ingrediant", "target", "method", "term", "action", and "new" "old" pa
+        relevant has the follow types: "items", "nav", "ingrediant", "target", "method", "term", "action", and "new" "old" pairs
         """
 
     def run(self):
@@ -225,7 +226,65 @@ class QA:
     def run_one_turn(self,question):
         # only for testing purposes
         pass 
-    
+
+    ### TESTING ###
+    @staticmethod
+    def _test_question(question):
+        # mock model
+        model = [
+            {
+                "step_number": 1,
+                "description": "Chop onions and heat olive oil.",
+                "ingredients": ["onions", "olive oil"],
+                "tools": ["knife", "cutting board"],
+                "methods": ["chop", "heat"],
+                "time": {"duration": "5 minutes"},
+                "temperature": {"oven": None},
+                "context": {"references": [], "warnings": []}
+            },
+            {
+                "step_number": 2,
+                "description": "Saute the onions until golden.",
+                "ingredients": ["onions"],
+                "tools": ["pan", "spatula"],
+                "methods": ["saute"],
+                "time": {"duration": "8 minutes"},
+                "temperature": {"pan": "medium heat"},
+                "context": {"references": [1], "warnings": []}
+            }
+        ]
+        qa = QA(model)
+        parsed = qa.question_parser(question)
+
+        # print results
+        print("\n")
+        print("input:", question)
+        print("detected type:", parsed["type"].name)
+        print("relevant info extracted", parsed["relevant"])
+
+    @staticmethod
+    def run_test_suite():
+        # bunch of questions (ADD MORE ONCE FIXED)
+        test_questions = [
+            "show me the ingredients list",
+            "what tools do I need?",
+            "what cooking technique is used in step 1?",
+            "go to the next step",
+            "go to step 2",
+            "how much onions do I need?",
+            "what temperature should I heat the oil?",
+            "how long do I saute?",
+            "when is it done?",
+            "can I use butter instead of olive oil?",
+            "what is a spatula?",
+            "how do I chop the onions?",
+            "how do I do that?",
+            "random question about obama"
+        ]
+
+        # test all the questions above
+        for question in test_questions:
+            QA._test_question(question)
+
 if __name__ == "__main__":
-    # ADD TESTING HERE
-    pass
+    QA.run_test_suite()
