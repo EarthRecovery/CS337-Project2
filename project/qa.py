@@ -57,42 +57,45 @@ class QA:
         # simple tokenization and lowercasing
         q = question.lower().strip()
         doc = self.nlp(q)
-        tokens = [token for token in doc]
 
-        # basic conditions added, ADD MORE LATER (NUEANCE)
-        if "ingredient" in tokens:
+        # create token lists/sets (lemmas used generalizability)
+        token_lemmas = [token.lemma_.lower() for token in doc]
+        lemmas_set = set(token_lemmas)
+
+        # basic conditions added, ADD MORE LATER (NUANCE)
+        if re.search(r"\bingredients?\b", q):
             return QuestionTypes.INGREDIENT_LIST
-        if "tool" in tokens or "equipment" in tokens:
+        if re.search(r"\btools?\b", q) or "equipment" in lemmas_set:
             return QuestionTypes.TOOL_LIST
-        if "technique" in tokens or "method" in tokens or "cooking technique" in q:
+        if "technique" in lemmas_set or "method" in lemmas_set or "cooking technique" in q:
             return QuestionTypes.METHOD_LIST
 
-        if "next step" in q or ("next" in tokens and "step" in tokens):
+        if "next step" in q or ("next" in lemmas_set and "step" in lemmas_set):
             return QuestionTypes.STEP_NEXT
-        if "previous" in tokens or "back" in tokens:
+        if "previous" in lemmas_set or "back" in lemmas_set:
             return QuestionTypes.STEP_PREVIOUS
-        if "repeat" in tokens:
+        if "repeat" in lemmas_set:
             return QuestionTypes.STEP_REPEAT
         if re.search(r"\bstep\s+(\d+)", q):
             return QuestionTypes.STEP_GOTO
 
-        if "how much" in q or "quantity" in tokens or "amount" in tokens:
+        if "how much" in q or "quantity" in lemmas_set or "amount" in lemmas_set:
             return QuestionTypes.QUANTITY
-        if "temperature" in tokens or "heat" in tokens:
+        if "heat" in lemmas_set or re.search(r"\btemp(?:erature)?\b", q):
             return QuestionTypes.TEMPERATURE
-        if "how long" in q or "time" in tokens:
+        if "how long" in q or "time" in lemmas_set:
             return QuestionTypes.TIME
-        if "done" in tokens or "ready" in tokens or "finished" in tokens:
+        if "done" in lemmas_set or "ready" in lemmas_set or "finished" in lemmas_set or (re.search(r"\bwhen is\b", q) and re.search(r"\b(done|ready)\b", q)):
             return QuestionTypes.DONENESS
 
-        if "instead of" in q or "replace" in tokens or "substitute" in tokens:
+        if "instead of" in q or "replace" in lemmas_set or "substitute" in lemmas_set:
             return QuestionTypes.SUBSTITUION
         if q.startswith("what is") or q.startswith("what's"):
             return QuestionTypes.WHAT_IS
         if q.startswith("how do"):
             return QuestionTypes.HOW_TO_SPECIFIC
         
-        # more logic needed here
+        # more logic needed here, esp with context
         '''
         return QuestionTypes.HOW_TO_VAGUE
         '''
@@ -103,6 +106,7 @@ class QA:
 
     def _extractor(self, question, question_type):
         q = question.lower().strip()
+
         # extract an integer after "step n"
         def extract_step_number(q):
             m = re.search(r"\bstep\s+(\d+)", q)
@@ -199,35 +203,85 @@ class QA:
                 }
         """
         relevant has the follow types: "items", "nav", "ingrediant", "target", "method", "term", "action", and "new" "old" pairs
+                                                  ^(navigation commands)                                        ^(for substitution)
         """
 
+    def _external_media_finder(self, q_data):
+        pass
+
+    def agent(self, q_data):
+        q_type = q_data["type"]
+
+        if q_type == self.question_types.INGREDIENT_LIST:
+            pass
+        if q_type == self.question_types.TOOL_LIST:
+            pass
+        if q_type == self.question_types.METHOD_LIST:
+            pass
+
+        if q_type == self.question_types.STEP_NEXT:
+            pass
+        if q_type == self.question_types.STEP_PREVIOUS:
+            pass
+        if q_type == self.question_types.STEP_REPEAT:
+            pass
+        if q_type == self.question_types.STEP_GOTO:
+            pass
+
+        if q_type == self.question_types.QUANTITY:
+            pass
+        if q_type == self.question_types.TEMPERATURE:
+            pass
+        if q_type == self.question_types.TIME:
+            pass
+        if q_type == self.question_types.DONENESS:
+            pass
+
+        if q_type == self.question_types.SUBSTITUION:
+            pass
+        if q_type == self.question_types.WHAT_IS:
+            pass
+        if q_type == self.question_types.HOW_TO_SPECIFIC:
+            pass
+        if q_type == self.question_types.HOW_TO_VAGUE:
+            pass
+
+        """
+        # if desired type requires, then get Google or Youtube URL
+        self._external_media_finder(q_data)
+        """
+
+        # if UNKNOWN
+        return "I'm not sure how to answer that."
+
+    def speech_to_text(self):
+    # Implement speech-to-text logic here
+        pass
+
+    # QA main loop here
     def run(self):
-        # Implement QA main loop here
         while True:
-            # maybe speech to text
+            """
+            # maybe speech to text for input?
+            input = self.speech_to_text()
+            question_parsed_data = self.question_parser(input)
+            """
             # get_question()
             question_parsed_data = self.question_parser(input("Please enter your question: "))
 
-            # handle data and choose appropriate response
+            # handle data and choose appropriate response by calling agent()
+            response = self.agent(question_parsed_data)
 
-            # look from parser data or get url/youtube by calling agent()
-            self.agent(question_parsed_data)
+            # update memory i.e. state tracking
+            """function here"""
 
             # output the answer
+            print(response)
 
-    def agent(self, question):
-        # Implement agent logic, get Google URL or Youtube link
-        pass
 
-    def speech_to_text(self):
-        # Implement speech-to-text logic here
-        pass
+    ##################### TESTING #####################
 
-    def run_one_turn(self,question):
-        # only for testing purposes
-        pass 
 
-    ### TESTING ###
     @staticmethod
     def _test_question(question):
         # mock model
@@ -272,19 +326,25 @@ class QA:
             "go to the next step",
             "go to step 2",
             "how much onions do I need?",
-            "what temperature should I heat the oil?",
+            "what temperature should I heat the oil?", 
             "how long do I saute?",
-            "when is it done?",
+            "when is it done?",                         
             "can I use butter instead of olive oil?",
             "what is a spatula?",
             "how do I chop the onions?",
-            "how do I do that?",
-            "random question about obama"
+            "how do I do that?",                        # HOW_TO_VAGUE not implimented yet
+            "who is obama?",
+            "what is obama's first name?"               # nonsense WHAT_IS type question -- fix?
         ]
 
         # test all the questions above
         for question in test_questions:
             QA._test_question(question)
+
+    def run_one_turn(self, question):
+        # only for testing purposes
+        pass 
+
 
 if __name__ == "__main__":
     QA.run_test_suite()
