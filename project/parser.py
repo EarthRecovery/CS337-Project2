@@ -1,3 +1,4 @@
+import html
 from spacy.tokenizer import Tokenizer
 from bs4 import BeautifulSoup
 import requests
@@ -76,8 +77,7 @@ class Parser:
             "serving": 0,
             "Ingredients": [],
             "Tools": [],
-            "Methods_primary": [],
-            "Methods_other": [],
+            "Methods": [],
             "Steps": [],
             "Nutrition": {}
         }
@@ -144,7 +144,7 @@ class Parser:
         tokenizer.token_match = pattern.match
         return tokenizer
 
-    def load_data(self):
+    def load_data_from_allrecipes(self):
         # Implement data loading logic here
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -207,12 +207,14 @@ class Parser:
             }
             self.webpage["ingredients"].append(ingredient_dict)
 
-        # Directions
-        direction_ol = soup.find("ol", class_=["comp", "mntl-sc-block", "mntl-sc-block-startgroup", "mntl-sc-block-group--OL"])
-        direction_li_list = direction_ol.find_all("li", class_="mntl-sc-block") if direction_ol else []
-        for idx, direction_li in enumerate(direction_li_list):
-            step_text = direction_li.find("p", class_=["comp", "mntl-sc-block", "mntl-sc-block-startgroup"]).get_text().strip() if direction_li.find("p", class_=["comp", "mntl-sc-block", "mntl-sc-block-startgroup"]) else ""
-            self.webpage["Directions"][f"step_{idx+1}"] = step_text
+            # Directions
+            direction_ol = soup.select_one("ol.mntl-sc-block-group--OL")
+            direction_li_list = direction_ol.select("li.mntl-sc-block") if direction_ol else []
+
+            for idx, li in enumerate(direction_li_list, 1):
+                p = li.select_one("p.mntl-sc-block-html")
+                step_text = p.get_text(strip=True) if p else ""
+                self.webpage["Directions"][f"step_{idx}"] = step_text
 
         # nutrition
         nutrition_tbody = soup.find("tbody", class_="mm-recipes-nutrition-facts-summary__table-body")
@@ -224,6 +226,88 @@ class Parser:
                 nutrient_name = nutrient_name_td.get_text().strip().lower().replace(" ", "_")
                 nutrient_value = nutrient_value_td.get_text().strip()
                 self.webpage["nutrition"][nutrient_name] = nutrient_value
+
+    # def load_data_from_bonappetit(self):
+    #     # Implement data loading logic here
+    #     headers = {
+    #         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    #     }
+    #     resp = requests.get(self.data_url, headers=headers)
+    #     if resp.status_code != 200:
+    #         raise Exception(f"Failed to load page: {resp.status_code}")
+
+    #     soup = BeautifulSoup(resp.text, "html.parser")
+    #     # dish_name
+    #     name_tag = soup.find("h1", attrs={"data-testid": "ContentHeaderHed"})
+    #     if name_tag:
+    #         self.webpage["dish_name"] = name_tag.get_text().strip()
+
+    #     # dish_intro
+    #     intro_tag = soup.find("div", attrs={"data-testid": "BodyWrapper"})
+    #     if intro_tag:
+    #         intro_p_list = intro_tag.find_all("p")
+    #         intro_texts = [p.get_text().strip() for p in intro_p_list]
+    #         self.webpage["dish_intro"] = " ".join(intro_texts)
+
+    #     # prep_time, cook_time, total_time
+    #     detail_content_div = soup.find("div", attrs={"data-testid": "InfoSliceList"})
+    #     if detail_content_div:
+    #         detail_p_list = detail_content_div.find_all("p")
+    #         total_time_p = detail_p_list[1]
+    #         yield_p = detail_p_list[3]
+    #         self.webpage["total_time"] = total_time_p.get_text().strip() if total_time_p else ""
+    #         yield_data = yield_p.get_text().strip() if yield_p else ""
+    #         if yield_data:
+    #             try:
+    #                 self.webpage["serving"] = int(yield_data.split()[0])
+    #             except:
+    #                 self.webpage["serving"] = 0
+    #     else:
+    #         print("No detail content div found")
+
+    #     # ingredients
+    #     ingredients_div = soup.find("div", class_="InfoSliceItem-sAZIH jermig")
+    #     div_lists = ingredients_div.find_all("div", recursive=False) if ingredients_div else []
+    #     ingridient_body_div = div_lists[0] if div_lists else None
+    #     p_list = ingridient_body_div.find_all("p") if ingridient_body_div else []
+    #     div_lists_2 = ingridient_body_div.find_all("div", recursive=False) if ingridient_body_div else []
+    #     for p,div in zip(p_list, div_lists_2):
+    #         quantity = p.get_text().strip() if p else ""
+    #         name = div.get_text().strip() if div else ""
+    #         pattern = pattern = r"<a\b[^>]*>"
+    #         name = re.sub(pattern, "", name)
+    #         ingredient_dict = {
+    #             "quantity": quantity,
+    #             "unit": "",
+    #             "name": name
+    #         }
+    #         self.webpage["ingredients"].append(ingredient_dict)
+
+    #     # Directions
+    #     wrapper = soup.find("div", attrs={"data-testid": "InstructionsWrapper"})
+    #     direction_li = wrapper.find_all("li", recursive=False)[0] if wrapper else None
+    #     h4_list = direction_li.find_all("h4") if direction_li else []
+    #     p_list = direction_li.find_all("p") if direction_li else []
+    #     def clean_keep_strong(html):
+    #         soup = BeautifulSoup(html, "html.parser")
+    #         for tag in soup.find_all():
+    #             if tag.name != "strong":
+    #                 tag.unwrap()     
+    #         return str(soup)
+    #     for idx, (h4, p) in enumerate(zip(h4_list, p_list)):
+    #         step_number = int(h4.get_text().strip().split()[1]) if h4 else ""
+    #         step_text = p.get_text().strip() if p else ""
+    #         step_text = clean_keep_strong(step_text)
+    #         self.webpage["Directions"][f"step_{step_number}"] = step_text
+
+
+    def load_data(self):
+        if "allrecipes.com" in self.data_url:
+            self.load_data_from_allrecipes()
+        # elif "bonappetit.com" in self.data_url:
+        #     self.load_data_from_bonappetit() # connot be used
+        else:
+            raise Exception("Unsupported website for data loading.")
 
     def _parse_ingredients(self):
         for ing in self.webpage.get("ingredients", []):
@@ -319,6 +403,18 @@ class Parser:
                 "preparation": preparation
             })
 
+    def filter_methods(self, methods):
+        input = self.keep_longest_unique(methods)
+
+        STOP_WORDS = {
+            "to", "be", "this", "that", "for", "with", "into", "on", "in", "of",
+            "and", "or", "the", "a", "an", "it", "they", "allow", "remain"
+        }
+
+        input = [m for m in input if m not in STOP_WORDS]
+
+        return input
+
     def keep_longest_unique(self, strings):
         strings = list(set(s.strip() for s in strings if s and s.strip()))
         strings.sort(key=len, reverse=True)
@@ -329,25 +425,108 @@ class Parser:
                 result.append(s)
 
         return result
+    
+    def split_into_atomic_steps(self, step_desc):
+        """
+        Split one direction paragraph into atomic actionable steps.
+        Also extract warnings / observations / advice instead of dropping them.
+        """
+        doc = self.nlp(step_desc)
 
+        # 1) First coarse split by punctuation
+        raw_segments = re.split(r"[.;]", step_desc)
+
+        atomic_segments = []
+        special_notes = {
+            "warnings": [],
+            "advice": [],
+            "observations": []
+        }
+
+        def classify_special(seg):
+            s = seg.lower().strip()
+
+            # warnings
+            if s.startswith(("be careful", "be sure", "make sure", "ensure", "avoid ")):
+                return "warnings"
+
+            # advice
+            if s.startswith(("you can", "you may", "it's okay", "it’s okay", "feel free")):
+                return "advice"
+
+            # observations
+            if s.startswith(("this ", "that ", "it ", "the mixture will", "the sauce will")):
+                return "observations"
+
+            return None
+
+        for seg in raw_segments:
+            seg = seg.strip().strip(",")
+            if not seg:
+                continue
+
+            # Remove leading filler words (“to”, “then”, “and”)
+            seg = re.sub(r"^(to|then|and|so|but|or)\b", "", seg, flags=re.IGNORECASE).strip()
+            if not seg:
+                continue
+
+            special_type = classify_special(seg)
+            if special_type:
+                special_notes[special_type].append(seg)
+                continue  # Skip adding as step
+
+            doc2 = self.nlp(seg)
+            verbs = [t for t in doc2 if t.pos_ == "VERB"]
+
+            if not verbs:
+                continue  
+
+            if len(seg.split()) <= 2 and len(verbs) == 0:
+                continue
+            atomic_segments.append(seg)
+
+        return atomic_segments, special_notes
+    
     def _parse_steps(self):
-        # Reset context for a fresh parse
         self.context_state = {
             "oven_preheated": False,
-            "oven_temp": None,
+            "oven_temperature": None,
             "prepared_items": set(),
         }
 
-        for step_key, step_desc in self.webpage.get("Directions", {}).items():
-            step_dict = self._parse_one_step(step_desc, step_key)
-            self.parsed_data["Steps"].append(step_dict)
+        directions = self.webpage.get("Directions", {})
+        atomic_step_counter = 1
 
-        # flatten lists
-        methods_raw = [method for step in self.parsed_data["Steps"] for method in step["methods"]]
-        tools_raw = [tool for step in self.parsed_data["Steps"] for tool in step["tools"]]
+        for step_key, step_desc in directions.items():
 
-        self.parsed_data["Methods_primary"] = self.keep_longest_unique(methods_raw)
-        self.parsed_data["Tools"] = self.keep_longest_unique(tools_raw)
+            atomic_segments, special_notes = self.split_into_atomic_steps(step_desc)
+            pending_special = special_notes
+
+            for atomic_text in atomic_segments:
+
+                parsed_step = self._parse_one_step(
+                    atomic_text,
+                    f"step_{atomic_step_counter}"
+                )
+                parsed_step["context"]["warnings"].extend(pending_special["warnings"])
+                parsed_step["context"]["advice"].extend(pending_special["advice"])
+                parsed_step["context"]["observations"].extend(pending_special["observations"])
+
+                pending_special = {
+                    "warnings": [],
+                    "advice": [],
+                    "observations": []
+                }
+
+                # Add to final steps list
+                self.parsed_data["Steps"].append(parsed_step)
+                atomic_step_counter += 1
+
+        methods_raw = [m for step in self.parsed_data["Steps"] for m in step["methods"]]
+        tools_raw = [t for step in self.parsed_data["Steps"] for t in step["tools"]]
+
+        self.parsed_data["Methods"] = self.filter_methods(methods_raw)
+        self.parsed_data["Tools"] = self.keep_longest_unique(list(dict.fromkeys(tools_raw)))
 
     @staticmethod
     def extract_noun_phrases(doc):
@@ -384,9 +563,64 @@ class Parser:
         if root in banned_abstract:
             return False
         return True
+    
+    def extract_temperature(self, text):
+        t = text.lower()
+        # ---- ignore angle (45 degree angle) ----
+        if "degree angle" in t or "degrees angle" in t:
+            return {}
+
+        # ---- pattern 1: 350 degrees F ----
+        m = re.search(r"(\d+)\s*degrees?\s*(f|c|°f|°c)", t)
+        if m:
+            num, unit = m.groups()
+            return f"{num} degrees {unit.upper()}"
+
+        # ---- pattern 2: 350°F / 350 °F / 350F ----
+        m = re.search(r"(\d+)\s*°?\s*(f|c)", t)
+        if m:
+            num, unit = m.groups()
+            return f"{num}°{unit.upper()}"
+
+        # ---- pattern 3: 350 F (space but no degree symbol) ----
+        m = re.search(r"(\d+)\s*(f|c)\b", t)
+        if m:
+            num, unit = m.groups()
+            return f"{num}°{unit.upper()}"
+
+        return {}
+
+
+    def extract_time(self, text):
+        text_l = text.lower()
+
+        # 1) Time range: "5 to 10 minutes"
+        m = re.search(r"(\d+)\s*(?:to|-|–)\s*(\d+)\s*(minute|minutes|min)", text_l)
+        if m:
+            t1, t2, unit = m.groups()
+            return {
+                "min": f"{t1} {unit}",
+                "max": f"{t2} {unit}"
+            }
+
+        # 2) "about 5 minutes" / "for 5 minutes"
+        m = re.search(r"(about|around|for)?\s*(\d+)\s*(minute|minutes|min)", text_l)
+        if m:
+            _, num, unit = m.groups()
+            return f"{num} {unit}"
+
+        # 3) hours + minutes "1 hour and 20 minutes"
+        m = re.search(r"(\d+)\s*hour[s]?\s*(?:and)?\s*(\d+)?\s*(minute|minutes)?", text_l)
+        if m:
+            hr, mn, unit = m.groups()
+            if mn:
+                return f"{hr} hours {mn} minutes"
+            return f"{hr} hours"
+
+        return {}
 
     def _parse_one_step(self, step_desc, step_key):
-        step_number = int(step_key.split("_")[1])
+        step_number = int(step_key.replace("step_", ""))
         step_dict = {
             "step_number": step_number,
             "description": step_desc,
@@ -490,35 +724,6 @@ class Parser:
 
         step_dict["tools"] = unique_keep_order(tools_clean)
 
-        # ---- Time & Temperature ----
-        for token in doc_step:
-            if token.like_num:
-                next_token = None
-                if token.i + 1 < len(doc_step):
-                    next_token = doc_step[token.i + 1]
-
-                if next_token and next_token.pos_ in ["NOUN", "PROPN"]:
-                    # time
-                    if next_token.text.lower() in [
-                        "minutes", "minute", "hours", "hour",
-                        "secs", "seconds", "sec", "mins"
-                    ]:
-                        step_dict["time"] = f"{token.text} {next_token.text}"
-                        continue
-
-                    # temperature: 350 degrees F
-                    if next_token.text.lower() in ["degrees"]:
-                        if token.i + 2 < len(doc_step):
-                            next_next_token = doc_step[token.i + 2]
-                            if next_next_token.text.lower() in ["°f", "°c", "f", "c"]:
-                                step_dict["temperature"] = f"{token.text} {next_token.text} {next_next_token.text}"
-                                continue
-
-                    # temperature: 350 F / 175 C
-                    if next_token.text.lower() in ["°f", "°c", "degrees", "degree", "f", "c"]:
-                        step_dict["temperature"] = f"{token.text} {next_token.text}"
-                        continue
-
         # ---- Differentiate information types: warnings / advice / observations ----
         # warnings
         for pat in self.WARNING_PATTERNS:
@@ -549,6 +754,14 @@ class Parser:
             # create a generic mixture name tied to this step
             mixture_name = f"mixture_step_{step_number}"
             self.context_state["prepared_items"].add(mixture_name)
+
+        # time extraction
+        time_info = self.extract_time(step_desc)
+        step_dict["time"] = time_info
+
+        # temperature extraction
+        temp_info = self.extract_temperature(step_desc)
+        step_dict["temperature"] = temp_info
 
         return step_dict
 
@@ -611,9 +824,20 @@ class Parser:
         for token in doc:
             print(f"{token.text}: {token.pos_} {token.dep_} {token.morph}")
 
+    @staticmethod
+    def test_crawling():
+        parser = Parser("https://www.bonappetit.com/recipe/make-ahead-gravy")
+        parser.load_data()
+        from pprint import pprint
+        pprint(parser.webpage)
+
 
 if __name__ == "__main__":
-    parser = Parser("https://www.allrecipes.com/recipe/276135/mini-brownie-turkeys/")
+    parser = Parser("https://www.allrecipes.com/spiral-spicy-cucumber-salad-recipe-11814637/")
     parsed = parser.parse()
     from pprint import pprint
-    pprint(parsed["Steps"])
+    pprint(parser.webpage)
+    pprint(parsed)
+
+    # Parser.show_parsed_data()
+    # Parser.test_crawling()
