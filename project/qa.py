@@ -206,50 +206,91 @@ class QA:
                                                   ^(navigation commands)                                        ^(for substitution)
         """
 
+
+    ### helper functions for agent ###
+
     def _external_media_finder(self, q_data):
         pass
+
+    def _agent_ingredient_list(self, q_data):
+        ingredients = self.model["ingredients"]
+        print("Here are all the ingredients called for:")
+        print(*ingredients, sep="\n")
+    def _agent_tool_list(self, q_data):
+        tools = self.model["tools"]
+        print("Here are all the tools called for:")
+        print(*tools, sep="\n")
+    def _agent_method_list(self, q_data):
+        methods = self.model["methods"]
+        print("Here are all the methods called for:")
+        print(*methods, sep="\n")
+
+    def _agent_step_next(self, q_data):
+        pass
+    def _agent_step_previous(self, q_data):
+        pass
+    def _agent_step_repeat(self, q_data):
+        pass
+    def _agent_step_goto(self, q_data):
+        pass
+    def _agent_quantity(self, q_data):
+        pass
+    def _agent_temperature(self, q_data):
+        pass
+    def _agent_time(self, q_data):
+        pass
+    def _agent_doneness(self, q_data):
+        pass
+    def _agent_substitution(self, q_data):
+        pass
+    def _agent_what_is(self, q_data):
+        pass
+    def _agent_how_to_specific(self, q_data):
+        pass
+    def _agent_how_to_vague(self, q_data):
+        pass
+        
+    """
+    # if desired type requires video (like HOW_TO), then get Google or Youtube URL
+    self._external_media_finder(q_data)
+    """
 
     def agent(self, q_data):
         q_type = q_data["type"]
 
         if q_type == self.question_types.INGREDIENT_LIST:
-            pass
+            self._agent_ingredient_list(q_data)
         if q_type == self.question_types.TOOL_LIST:
-            pass
+            self._agent_tool_list(q_data)
         if q_type == self.question_types.METHOD_LIST:
-            pass
+            self._agent_method_list(q_data)
 
         if q_type == self.question_types.STEP_NEXT:
-            pass
+            self._agent_step_next(q_data)
         if q_type == self.question_types.STEP_PREVIOUS:
-            pass
+            self._agent_step_previous(q_data)
         if q_type == self.question_types.STEP_REPEAT:
-            pass
+            self._agent_step_repeat(q_data)
         if q_type == self.question_types.STEP_GOTO:
-            pass
+            self._agent_step_goto(q_data)
 
         if q_type == self.question_types.QUANTITY:
-            pass
+            self._agent_quantity(q_data)
         if q_type == self.question_types.TEMPERATURE:
-            pass
+            self._agent_temperature(q_data)
         if q_type == self.question_types.TIME:
-            pass
+            self._agent_time(q_data)
         if q_type == self.question_types.DONENESS:
-            pass
+            self._agent_doneness(q_data)
 
         if q_type == self.question_types.SUBSTITUION:
-            pass
+            self._agent_substitution(q_data)
         if q_type == self.question_types.WHAT_IS:
-            pass
+            self._agent_what_is(q_data)
         if q_type == self.question_types.HOW_TO_SPECIFIC:
-            pass
+            self._agent_how_to_specific(q_data)
         if q_type == self.question_types.HOW_TO_VAGUE:
-            pass
-
-        """
-        # if desired type requires, then get Google or Youtube URL
-        self._external_media_finder(q_data)
-        """
+            self._agent_how_to_vague(q_data)
 
         # if UNKNOWN
         return "I'm not sure how to answer that."
@@ -270,13 +311,10 @@ class QA:
             question_parsed_data = self.question_parser(input("Please enter your question: "))
 
             # handle data and choose appropriate response by calling agent()
-            response = self.agent(question_parsed_data)
+            self.agent(question_parsed_data)
 
             # update memory i.e. state tracking
             """function here"""
-
-            # output the answer
-            print(response)
 
 
     ##################### TESTING #####################
