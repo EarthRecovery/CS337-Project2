@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Q&A Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍳 Recipe Q&A Assistant</h1>
+            <p class="subtitle">Interactive cooking companion with voice support</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Recipe Input Section -->
+            <section class="recipe-input-section" id="recipe-input-section">
+                <h2>Load a Recipe</h2>
+                <div class="input-group">
+                    <input type="url"
+                           id="recipe-url"
+                           placeholder="Enter AllRecipes.com URL (e.g., https://www.allrecipes.com/...)"
+                           class="url-input">
+                    <button id="load-recipe-btn" class="btn btn-primary">Load Recipe</button>
+                </div>
+                <div id="recipe-info" class="recipe-info hidden">
+                    <h3 id="dish-name"></h3>
+                    <p id="dish-intro"></p>
+                    <div class="recipe-meta">
+                        <span id="prep-time"></span>
+                        <span id="cook-time"></span>
+                        <span id="total-time"></span>
+                        <span id="serving"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Interface Section -->
+            <section class="chat-section hidden" id="chat-section">
+                <div class="chat-header">
+                    <h2>Ask Questions</h2>
+                    <div class="step-indicator">
+                        <span>Current Step: <strong id="current-step">0</strong></span>
+                        <span> / </span>
+                        <span id="max-step">0</span>
+                    </div>
+                </div>
+
+                <div class="chat-container" id="chat-container">
+                    <div class="chat-message system">
+                        <div class="message-content">
+                            <p>Recipe loaded successfully! You can now ask questions like:</p>
+                            <ul>
+                                <li>"Show me the ingredients"</li>
+                                <li>"What tools do I need?"</li>
+                                <li>"Go to the next step"</li>
+                                <li>"How much salt do I need?"</li>
+                                <li>"What temperature?"</li>
+                                <li>You can also ask how to do a specific step and we will gather resources for you. Like how to whisk an egg.</li>
+                            </ul>
+                            <p>Use the microphone button to ask questions using your voice!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <div class="input-group">
+                        <input type="text"
+                               id="question-input"
+                               placeholder="Type your question or click the microphone to speak..."
+                               class="question-input">
+                        <button id="mic-btn" class="btn btn-mic" title="Click to speak">
+                            <span class="mic-icon">🎤</span>
+                        </button>
+                        <button id="send-btn" class="btn btn-primary">Send</button>
+                    </div>
+                    <div id="speech-status" class="speech-status hidden">Listening...</div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>CS337 Lab 2,  Recipe Q&A with Speech Recognition</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

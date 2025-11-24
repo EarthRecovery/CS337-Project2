@@ -6,3 +6,6 @@ unidecode
 inflection
 langdetect
 beatutifulsoup4
+flask
+requests
+beautifulsoup4
