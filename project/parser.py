@@ -690,19 +690,34 @@ class Parser:
 
         matched = []
 
+        def lemma_word(word):
+            doc = self.nlp(word)
+            return doc[0].lemma_.lower()
+
         for np in noun_phrase:
             np_low = np.lower()
+            np_tokens = np_low.split()
 
             for ing in ingredients_list:
                 ing_low = ing.lower()
-
-                np_tokens = np_low.split()
                 ing_tokens = ing_low.split()
+
                 for np_token in np_tokens:
-                    if np_token in ing_tokens:
-                        matched.append(np)
-                        step_dict["ingredients"].append(np)
-                        break
+                    np_lem = lemma_word(np_token)
+
+                    for ing_token in ing_tokens:
+                        ing_lem = lemma_word(ing_token)
+
+                        if np_lem == ing_lem:
+                            matched.append(np)
+                            step_dict["ingredients"].append(np)
+                            break
+
+                    else:
+                        continue  # inner loop no break → continue np_token loop
+                    break  # inner loop break → match found → break ing loop
+
+        
 
         step_dict["ingredients"] = unique_keep_order(step_dict["ingredients"])
 
@@ -833,7 +848,7 @@ class Parser:
 
 
 if __name__ == "__main__":
-    parser = Parser("https://www.allrecipes.com/spiral-spicy-cucumber-salad-recipe-11814637/")
+    parser = Parser("https://www.allrecipes.com/recipe/218091/classic-and-simple-meat-lasagna/")
     parsed = parser.parse()
     from pprint import pprint
     pprint(parser.webpage)
