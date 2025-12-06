@@ -1,0 +1,300 @@
+{
+  "demo_parsed_data": {
+    "Directions": {
+      "step_1": "Preheat the oven to 350 degrees F (175 degrees C).",
+      "step_2": "Bring a large pot of lightly salted water to a boil. Add lasagna noodles and cook for 10 minutes or until al dente; drain.",
+      "step_3": "Meanwhile, place ground beef, garlic, oregano, garlic powder, salt, and black pepper in a large skillet over medium heat; cook and stir until beef is crumbly and evenly browned, about 10 minutes.",
+      "step_4": "Mix cottage cheese, Parmesan cheese, and eggs together in a large bowl until thoroughly combined.",
+      "step_5": "Lay 4 noodles side by side on the bottom of a 9x13-inch baking pan; top with a layer of prepared tomato-basil sauce, a layer of ground beef mixture, and a layer of cottage cheese mixture. Repeat layers twice more, ending with a layer of sauce; sprinkle mozzarella cheese on top. Cover the dish with aluminum foil.",
+      "step_6": "Bake in the preheated oven until the lasagna is bubbling and the cheese has melted, about 30 minutes. Remove foil and bake until cheese has begun to brown, about 10 more minutes. Allow to stand at least 10 minutes before serving."
+    },
+    "cook_time": "1 hr",
+    "dish_intro": "This lasagna with ground beef and whole wheat noodles is an easy, yet hearty family-pleasing dish.",
+    "dish_name": "Classic and Simple Meat Lasagna",
+    "ingredients": [
+      { "name": "whole wheat lasagna noodles", "quantity": "12", "unit": "" },
+      { "name": "lean ground beef", "quantity": "1", "unit": "pound" },
+      { "name": "garlic, chopped", "quantity": "2", "unit": "cloves" },
+      { "name": "dried oregano, or to taste", "quantity": "1", "unit": "teaspoon" },
+      { "name": "garlic powder", "quantity": "½", "unit": "teaspoon" },
+      { "name": "salt and ground black pepper to taste", "quantity": "", "unit": "" },
+      { "name": "cottage cheese", "quantity": "1", "unit": "(16 ounce) package" },
+      { "name": "shredded Parmesan cheese", "quantity": "½", "unit": "cup" },
+      { "name": "eggs", "quantity": "2", "unit": "" },
+      { "name": "tomato-basil pasta sauce", "quantity": "4 ½", "unit": "cups" },
+      { "name": "shredded mozzarella cheese", "quantity": "2", "unit": "cups" }
+    ],
+    "nutrition": {
+      "calories": "501",
+      "carbs": "47g",
+      "fat": "19g",
+      "protein": "36g"
+    },
+    "prep_time": "25 mins",
+    "serving": 1,
+    "total_time": "10 mins",
+    "url": "https://www.allrecipes.com/recipe/218091/classic-and-simple-meat-lasagna/"
+  },
+  "parsed_output": {
+    "Ingredients": [
+      { "descriptor": "whole", "full_text": "12  whole wheat lasagna noodles", "measurement": "", "name": "whole wheat lasagna noodles", "preparation": null, "quantity": "12" },
+      { "descriptor": "lean", "full_text": "1 pound lean ground beef", "measurement": "pound", "name": "lean ground beef", "preparation": null, "quantity": "1" },
+      { "descriptor": "chopped", "full_text": "2 cloves garlic, chopped", "measurement": "cloves", "name": "garlic", "preparation": "chopped", "quantity": "2" },
+      { "descriptor": "dried to taste", "full_text": "1 teaspoon dried oregano, or to taste", "measurement": "teaspoon", "name": "oregano", "preparation": null, "quantity": "1" },
+      { "descriptor": "garlic", "full_text": "½ teaspoon garlic powder", "measurement": "teaspoon", "name": "garlic powder", "preparation": null, "quantity": "½" },
+      { "descriptor": "black to taste", "full_text": "salt and ground black pepper to taste", "measurement": "", "name": "salt", "preparation": null, "quantity": "" },
+      { "descriptor": null, "full_text": "1 (16 ounce) package cottage cheese", "measurement": "(16 ounce) package", "name": "cottage cheese", "preparation": null, "quantity": "1" },
+      { "descriptor": "shredded", "full_text": "½ cup shredded Parmesan cheese", "measurement": "cup", "name": "Parmesan cheese", "preparation": null, "quantity": "½" },
+      { "descriptor": null, "full_text": "2  eggs", "measurement": "", "name": "eggs", "preparation": null, "quantity": "2" },
+      { "descriptor": "tomato-basil", "full_text": "4 ½ cups tomato-basil pasta sauce", "measurement": "cups", "name": "tomato-basil pasta sauce", "preparation": null, "quantity": "4 ½" },
+      { "descriptor": "shredded", "full_text": "2 cups shredded mozzarella cheese", "measurement": "cups", "name": "mozzarella cheese", "preparation": null, "quantity": "2" }
+    ],
+    "Methods": [
+      "sprinkle","preheat","combine","bubble","repeat","remove","begin","layer",
+      "serve","brown","stand","cover","bring","bake","melt","stir","cook","salt",
+      "Bake","mix","add","end","Lay"
+    ],
+    "Nutrition": {
+      "calories": "501",
+      "carbs": "47g",
+      "fat": "19g",
+      "protein": "36g"
+    },
+    "Steps": [
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": [],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Preheat the oven to 350 degrees F (175 degrees C)",
+        "ingredients": [],
+        "methods": ["preheat"],
+        "step_number": 1,
+        "temperature": "350 degrees F",
+        "time": {},
+        "tools": ["the oven"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": [],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Bring a large pot of lightly salted water to a boil",
+        "ingredients": ["salted water"],
+        "methods": ["bring", "salt"],
+        "step_number": 2,
+        "temperature": {},
+        "time": {},
+        "tools": ["a large pot", "a boil"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": [],
+          "observations": ["until al dente"],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Add lasagna noodles and cook for 10 minutes or until al dente",
+        "ingredients": ["lasagna noodles"],
+        "methods": ["add", "cook"],
+        "step_number": 3,
+        "temperature": {},
+        "time": "10 minute",
+        "tools": ["al dente"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": [],
+          "observations": ["until beef is crumbly and evenly browned, about 10 minutes"],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "cook and stir until beef is crumbly and evenly browned, about 10 minutes",
+        "ingredients": ["beef"],
+        "methods": ["cook", "stir", "brown"],
+        "step_number": 4,
+        "temperature": {},
+        "time": "10 minute",
+        "tools": []
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4"],
+          "observations": ["until thoroughly combined"],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Mix cottage cheese, Parmesan cheese, and eggs together in a large bowl until thoroughly combined",
+        "ingredients": ["Parmesan cheese", "cottage cheese", "eggs"],
+        "methods": ["mix", "combine"],
+        "step_number": 5,
+        "temperature": {},
+        "time": {},
+        "tools": ["a large bowl"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Lay 4 noodles side by side on the bottom of a 9x13-inch baking pan",
+        "ingredients": ["4 noodles"],
+        "methods": ["Lay", "bake"],
+        "step_number": 6,
+        "temperature": {},
+        "time": {},
+        "tools": ["side"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Repeat layers twice more, ending with a layer of sauce",
+        "ingredients": ["sauce"],
+        "methods": ["repeat", "layer", "end"],
+        "step_number": 7,
+        "temperature": {},
+        "time": {},
+        "tools": ["a layer"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "sprinkle mozzarella cheese on top",
+        "ingredients": ["mozzarella cheese"],
+        "methods": ["sprinkle"],
+        "step_number": 8,
+        "temperature": {},
+        "time": {},
+        "tools": []
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Cover the dish with aluminum foil",
+        "ingredients": [],
+        "methods": ["cover"],
+        "step_number": 9,
+        "temperature": {},
+        "time": {},
+        "tools": ["aluminum foil", "the dish"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": ["until the lasagna is bubbling and the cheese has melted, about 30 minutes"],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Bake in the preheated oven until the lasagna is bubbling and the cheese has melted, about 30 minutes",
+        "ingredients": ["the lasagna", "the cheese"],
+        "methods": ["Bake", "bubble", "melt"],
+        "step_number": 10,
+        "temperature": {},
+        "time": "30 minute",
+        "tools": ["oven"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": ["until cheese has begun to brown, about 10 more minutes"],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Remove foil and bake until cheese has begun to brown, about 10 more minutes",
+        "ingredients": ["cheese"],
+        "methods": ["remove", "bake", "begin"],
+        "step_number": 11,
+        "temperature": {},
+        "time": {},
+        "tools": ["foil"]
+      },
+      {
+        "context": {
+          "advice": [],
+          "available_mixtures": ["mixture_step_4", "mixture_step_5"],
+          "observations": [],
+          "oven_preheated": false,
+          "oven_temperature": null,
+          "references": [],
+          "warnings": []
+        },
+        "description": "Allow to stand at least 10 minutes before serving",
+        "ingredients": [],
+        "methods": ["allow", "stand", "serve"],
+        "step_number": 12,
+        "temperature": {},
+        "time": "10 minute",
+        "tools": []
+      }
+    ],
+    "Tools": [
+      "aluminum foil",
+      "a large bowl",
+      "a large pot",
+      "the oven",
+      "the dish",
+      "al dente",
+      "a layer",
+      "a boil",
+      "side"
+    ],
+    "cook_time": "1 hr",
+    "dish_intro": "This lasagna with ground beef and whole wheat noodles is an easy, yet hearty family-pleasing dish.",
+    "dish_name": "Classic and Simple Meat Lasagna",
+    "prep_time": "25 mins",
+    "serving": 1,
+    "total_time": "10 mins",
+    "url": "https://www.allrecipes.com/recipe/218091/classic-and-simple-meat-lasagna/"
+  }
+}

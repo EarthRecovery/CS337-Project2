@@ -9,3 +9,5 @@ beatutifulsoup4
 flask
 requests
 beautifulsoup4
+google-genai
+python-dotenv
