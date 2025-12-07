@@ -156,7 +156,7 @@ Assistant: "I wouldn't recommend skipping the preheating step. Putting your batt
 User: "Who won the Super Bowl?"
 Assistant: "I can only help with cooking and recipe-related questions. What would you like to know about this recipe?"
 
-Now help the user with their recipe.
+Now help the user with their recipe..
 """
 
 
