@@ -63,7 +63,7 @@ GEMINI_API_KEY=your_api_key_here
 ### 4. Run the Assistant
 
 ```bash
-cd part2 # only if not already in the directory obviously
+cd part3 # only if not already in the directory obviously
 python main.py
 ```
 
