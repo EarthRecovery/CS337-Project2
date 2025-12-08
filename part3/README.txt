@@ -67,7 +67,7 @@ cd part3 # only if not already in the directory obviously
 python main.py
 ```
 
-Simply select the configuration dictionary to **Part 3 mode** when prompeted
+Simply select the configuration dictionary to **Y** when prompeted if Hybrid Model is desired
 
 ## **Model**
 
