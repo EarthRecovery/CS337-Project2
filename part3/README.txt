@@ -1,3 +1,9 @@
+# Part 3 — LLM-Hybrid Recipe Assistant
+
+**Group 5**: Yuxiang Lin, Matthew Mailman, Andre Washington
+
+A hybrid prompt driven conversational recipe assistant assisted by Gemini LLM
+
 ## **Setup**
 
 The setup procedure is identical to Part 1:
