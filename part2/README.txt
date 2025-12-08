@@ -89,6 +89,13 @@ pip install google-genai python-dotenv requests beautifulsoup4
 Create a `.env` file in the `part2/` directory:
 
 ```bash
+cd part2
+cp .env.example .env
+```
+
+Then change the api key in the new `.env` file
+
+```bash
 GEMINI_API_KEY=your_api_key_here
 ```
 
@@ -97,7 +104,7 @@ GEMINI_API_KEY=your_api_key_here
 ### 4. Run the Assistant
 
 ```bash
-cd part2
+cd part2 # only if not already in the directory obviously
 python main.py
 ```
 

@@ -119,7 +119,7 @@ Parse the HTML to identify ingredients, steps, tools, methods, times, and temper
             "role": "user",
             "parts": [{"text": user_message}]
         })
-
+        
         try:
             # Generate response using conversation history
             response = self.client.models.generate_content(

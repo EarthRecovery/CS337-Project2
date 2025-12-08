@@ -778,7 +778,7 @@ class QA:
                         print("Invalid URL. Please try again.")
             else:
                 while True:
-                    print("Please input a URL for recipe parsing first, the URL must from AllRecipes.com")
+                    print("Please input a URL for recipe parsing first, the URL can come from any recipe website")
                     URL = input("Enter recipe URL: ")
                     from parser import Parser
                     try:

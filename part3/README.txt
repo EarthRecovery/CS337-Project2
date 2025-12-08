@@ -1,16 +1,67 @@
 ## **Setup**
 
-The setup procedure is identical to Part 1.
+The setup procedure is identical to Part 1:
+
+(
+## Requirements
+
+- Python 3.10+
+
+## Installation
+
+(to be done while in the `CS337-Project2/` directory, NOT `part3/`)
+1. Install Python dependencies:
+pip install -r requirements.txt
+
+2. Download the spaCy English model:
+python -m spacy download en_core_web_sm
+)
+
+## GitHub Repository
+
+github address: [EarthRecovery/CS337-Project2](https://github.com/EarthRecovery/CS337-Project2)
 
 To add GEMINI API_KEY, add a .env file under part3 dictionary, and add GEMINI_API_KEY=...
 
-To run the QA system, simply switch the configuration dictionary to **Part 3 mode** and execute:
+To run the QA system, execute the following as nessacary:
 
+### 1. Install Dependencies
+
+```bash
+pip install google-genai python-dotenv requests beautifulsoup4
 ```
+
+### 2. Create API Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com/apikey)
+2. Sign in with your Google account
+3. Create a Gemini API key
+
+### 3. Configure Environment
+
+Create a `.env` file in the `part2/` directory:
+
+```bash
+cd part3
+cp .env.example .env
+```
+
+Then change the api key in the new `.env` file
+
+```bash
+GEMINI_API_KEY=your_api_key_here
+```
+
+**Important**: Add `.env` to your `.gitignore` to keep your API key private!
+
+### 4. Run the Assistant
+
+```bash
+cd part2 # only if not already in the directory obviously
 python main.py
 ```
 
-github address: [EarthRecovery/CS337-Project2](https://github.com/EarthRecovery/CS337-Project2)
+Simply select the configuration dictionary to **Part 3 mode** when prompeted
 
 ## **Model**
 
